@@ -93,24 +93,15 @@ class JcrNodesWriter implements ItemWriter<ProtoNode>, ItemWriteListener {
         return retVal
     }
 
-
     private static void writeToJcr(ProtoNode nodeProto, Session session) {
+        // This is only processed when child nodes has values and it will only have incase of type "nt:hierarchy"
+        if(nodeProto.childNodeList && nodeProto.childNodeList.size() > 0) {
+            for(ProtoNode childNode: nodeProto.childNodeList) {
+                writeToJcr(childNode, session)
+            }
+        }
 
         JCRNodeDecorator jcrNode = new ProtoNodeDecorator(nodeProto).writeToJcr(session)
-
-        //If the primary type is NT_FILE, we have to do some goofiness to make sure a jcr:content node is written with the nt_file node
-        if (jcrNode.getPrimaryType() == NT_FILE) {
-            //Now we have to add the jcr:content node to enforce the nt:hierarchy requirements
-            JCRNodeDecorator jcrContentNode = new JCRNodeDecorator(JcrUtils.getOrAddNode(jcrNode as Node, JCR_CONTENT, NodeType.NT_RESOURCE))
-            /*
-            * TODO : This is a workaround for the case where a chunk gets 'saved' in JCR and the last node was 'nt:file'
-            * If jcr:data is not part of that chunk then you will get a constraint violation exception
-            * To get around that, just add an empty binary jcr:data here with a "temp" value
-            * This will always be overridden by the actual jcr:data value as that will be the next thing received
-            */
-            jcrContentNode.setProperty(JCR_DATA, new BinaryValue("temp".bytes))
-            jcrContentNode.setLastModified()
-        }
         jcrNode.setLastModified()
     }
 

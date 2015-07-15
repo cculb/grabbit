@@ -3,6 +3,8 @@ dependencies {
     // Library for Groovy
     compile "org.codehaus.groovy:groovy-all:${groovy_version}"
 
+    compile "com.day.cq:cq-replication:${cq_replication_version}"
+
     // Used as part of the build to create the OSGI-INF/serviceComponents.xml file
     compile "org.apache.felix:org.apache.felix.scr.annotations:${scr_annotations_version}"
 

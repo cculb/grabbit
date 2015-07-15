@@ -101,6 +101,8 @@ configurations.cq_package {
 
     exclude group: 'org.apache.commons', module: 'commons-lang3'
     exclude group: 'org.apache.commons', module: 'commons-lang'
+
+    exclude group: 'com.day.cq', module: 'cq-replication'
 }
 
 bundle.installPath = '/apps/grabbit/install/${nativeStartLevel}'

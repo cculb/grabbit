@@ -16,6 +16,7 @@
 
 package com.twcable.grabbit.server.batch.steps.jcrnodes
 
+import com.day.cq.replication.DefaultAggregateHandler
 import com.google.protobuf.ByteString
 import com.twcable.grabbit.DateUtil
 import com.twcable.grabbit.proto.NodeProtos
@@ -24,12 +25,14 @@ import com.twcable.grabbit.proto.NodeProtos.Properties
 import com.twcable.grabbit.proto.NodeProtos.Property
 import groovy.transform.CompileStatic
 import groovy.util.logging.Slf4j
+import org.apache.jackrabbit.JcrConstants
 import org.springframework.batch.item.ItemProcessor
 
 import javax.jcr.Node as JcrNode
 import javax.jcr.Property as JcrProperty
 import javax.jcr.PropertyType
 import javax.jcr.Value
+import javax.jcr.nodetype.NodeType
 
 import static javax.jcr.PropertyType.BINARY
 import static javax.jcr.PropertyType.BOOLEAN
@@ -88,10 +91,64 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
             }
         }
 
-        final List<JcrProperty> properties = jcrNode.properties.toList()
-        Node.Builder nodeBuilder = Node.newBuilder()
-        nodeBuilder.setName(jcrNode.path)
+        // Hierarchy node logic
+        if(isHierarchyNode(jcrNode)) {
+            if(isRequiredChild(jcrNode)) {
+                return null;
+            } else {
+                return buildNode(jcrNode, getRequiredChildNodes(jcrNode))
+            }
+        } else if(isRequiredChild(jcrNode)) {
+            return null;
+        }
+        // Non-Hierarchy node logic
+        return buildNode(jcrNode, null)
+    }
 
+    private Node buildNode(JcrNode jcrNode, List<JcrNode> childNodes) {
+        System.out.println("******************************************************************")
+        System.out.println(jcrNode.getPath() + " -> " + jcrNode.getPrimaryNodeType().toString())
+        for(NodeType nodeType : jcrNode.getParent().getDefinition().requiredPrimaryTypes) {
+            System.out.println("-----------------------------------------")
+            System.out.println(nodeType.toString())
+        }
+
+        final Node.Builder nodeBuilder = Node.newBuilder()
+        nodeBuilder.setName(jcrNode.path)
+        nodeBuilder.setProperties(buildProperties(jcrNode))
+        childNodes?.each {
+            nodeBuilder.addChildNode(buildNode(it, getRequiredChildNodes(it)))
+        }
+        return nodeBuilder.build()
+    }
+
+    private static List<JcrNode> getRequiredChildNodes(JcrNode jcrNode) {
+        List<JcrNode> childNodes = new ArrayList<JcrNode>()
+        // TODO: Need to groovify
+        Iterator<Node> iterator = jcrNode.getNodes()
+        while(iterator) {
+            JcrNode childJcrNode = iterator.nextNode()
+            if(isRequiredNode(childJcrNode)) {
+                childNodes.add(childJcrNode)
+            }
+        }
+        return childNodes
+    }
+
+    private static boolean isRequiredChild(JcrNode node) {
+        return node.getParent().getDefinition().requiredPrimaryTypes.find({ NodeType type -> type.toString() == JcrConstants.NT_HIERARCHYNODE})
+    }
+
+    private static boolean isRequiredNode(JcrNode node) {
+        return node.getDefinition().isMandatory() || node.getParent().getDefinition().requiredPrimaryTypes.contains(node.getPrimaryNodeType())
+    }
+
+    private static boolean isHierarchyNode(JcrNode node) {
+        return new DefaultAggregateHandler().isAggregateRoot(node)
+    }
+
+    private static NodeProtos.Properties buildProperties(JcrNode jcrNode) {
+        final List<JcrProperty> properties = jcrNode.properties.toList()
         Properties.Builder propertiesBuilder = Properties.newBuilder()
         properties.each { JcrProperty jcrProperty ->
             //Before adding a property to the Current Node Proto message, check if the property
@@ -101,11 +158,8 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
                 propertiesBuilder.addProperty(property)
             }
         }
-        nodeBuilder.setProperties(propertiesBuilder.build())
-
-        nodeBuilder.build()
+        propertiesBuilder.build()
     }
-
     /**
      * Returns the "jcr:created", "jcr:lastModified" or "cq:lastModified" date property
      * for current Jcr Node
