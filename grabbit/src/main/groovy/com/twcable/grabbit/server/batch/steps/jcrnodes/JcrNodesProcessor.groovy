@@ -93,11 +93,17 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
 
         // Hierarchy node logic
         if(isHierarchyNode(jcrNode)) {
+            // It checkes if the parent has required primary type as "nt:hierarchyNode"
+            // then skip it as the node has already been processed by parent node
             if(isRequiredChild(jcrNode)) {
                 return null;
             } else {
+                // Parent "nt:hierarchyNode" type will be processed
                 return buildNode(jcrNode, getRequiredChildNodes(jcrNode))
             }
+            // It checkes if the parent has required primary type as "nt:hierarchyNode"
+            // then skip it as the node has already been processed by parent node
+            // NOTE: It is always not true for a required child node of type "nt:hierarchy" node even if parent is of type "nt:hierarchy"
         } else if(isRequiredChild(jcrNode)) {
             return null;
         }
