@@ -111,7 +111,7 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
         return buildNode(jcrNode, null)
     }
 
-    private Node buildNode(JcrNode jcrNode, List<JcrNode> childNodes) {
+    private Node buildNode(JcrNode jcrNode, Collection<JcrNode> childNodes) {
         final Node.Builder nodeBuilder = Node.newBuilder()
         nodeBuilder.setName(jcrNode.path)
         nodeBuilder.setProperties(buildProperties(jcrNode))
@@ -121,17 +121,10 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
         return nodeBuilder.build()
     }
 
-    private static List<JcrNode> getRequiredChildNodes(JcrNode jcrNode) {
-        List<JcrNode> childNodes = new ArrayList<JcrNode>()
-        // TODO: Need to groovify
-        Iterator<Node> iterator = jcrNode.getNodes()
-        while(iterator) {
-            JcrNode childJcrNode = iterator.nextNode()
-            if(isRequiredNode(childJcrNode)) {
-                childNodes.add(childJcrNode)
-            }
-        }
-        return childNodes
+    private static Collection<JcrNode> getRequiredChildNodes(JcrNode jcrNode) {
+        return jcrNode.getNodes()
+                .findAll{JcrNode childJcrNode -> isRequiredNode(childJcrNode)}
+                .collect{it}
     }
 
     private static boolean isRequiredChild(JcrNode node) {
