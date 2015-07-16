@@ -106,13 +106,6 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
     }
 
     private Node buildNode(JcrNode jcrNode, List<JcrNode> childNodes) {
-        System.out.println("******************************************************************")
-        System.out.println(jcrNode.getPath() + " -> " + jcrNode.getPrimaryNodeType().toString())
-        for(NodeType nodeType : jcrNode.getParent().getDefinition().requiredPrimaryTypes) {
-            System.out.println("-----------------------------------------")
-            System.out.println(nodeType.toString())
-        }
-
         final Node.Builder nodeBuilder = Node.newBuilder()
         nodeBuilder.setName(jcrNode.path)
         nodeBuilder.setProperties(buildProperties(jcrNode))
