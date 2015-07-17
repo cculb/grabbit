@@ -124,11 +124,10 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
     private static Collection<JcrNode> getRequiredChildNodes(JcrNode jcrNode) {
         return jcrNode.getNodes()
                 .findAll{JcrNode childJcrNode -> isRequiredHierarchyChildNode(childJcrNode)}
-                .collect{it}
     }
 
     private static boolean isRequiredHierarchyChildNode(JcrNode node) {
-        return node.getDefinition().isMandatory() && node.getParent().getDefinition().requiredPrimaryTypes.find({ NodeType type -> type.toString() == JcrConstants.NT_HIERARCHYNODE})
+        return node.getDefinition().isMandatory() && node.getParent().getDefinition().requiredPrimaryTypes.any{ it.toString() == JcrConstants.NT_HIERARCHYNODE }
     }
 
     private static boolean isHierarchyNode(JcrNode node) {
