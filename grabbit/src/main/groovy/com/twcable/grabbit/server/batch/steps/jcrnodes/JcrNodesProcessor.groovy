@@ -95,7 +95,7 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
         if(isHierarchyNode(jcrNode)) {
             // It checkes if the parent has required primary type as "nt:hierarchyNode"
             // then skip it as the node has already been processed by parent node
-            if(isRequiredChild(jcrNode)) {
+            if(isRequiredHierarchyChildNode(jcrNode)) {
                 return null;
             } else {
                 // Parent "nt:hierarchyNode" type will be processed
@@ -104,7 +104,7 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
             // It checkes if the parent has required primary type as "nt:hierarchyNode"
             // then skip it as the node has already been processed by parent node
             // NOTE: It is always not true for a required child node of type "nt:hierarchy" node even if parent is of type "nt:hierarchy"
-        } else if(isRequiredChild(jcrNode)) {
+        } else if(isRequiredHierarchyChildNode(jcrNode)) {
             return null;
         }
         // Non-Hierarchy node logic
@@ -127,8 +127,8 @@ class JcrNodesProcessor implements ItemProcessor<JcrNode, Node> {
                 .collect{it}
     }
 
-    private static boolean isRequiredChild(JcrNode node) {
-        return node.getParent().getDefinition().requiredPrimaryTypes.find({ NodeType type -> type.toString() == JcrConstants.NT_HIERARCHYNODE})
+    private static boolean isRequiredHierarchyChildNode(JcrNode node) {
+        return node.getDefinition().isMandatory() && node.getParent().getDefinition().requiredPrimaryTypes.find({ NodeType type -> type.toString() == JcrConstants.NT_HIERARCHYNODE})
     }
 
     private static boolean isRequiredNode(JcrNode node) {
