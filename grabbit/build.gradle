@@ -16,20 +16,9 @@ ext.bundleName = 'Grabbit'
 ext.bundleDescription = 'Grabbit'
 ext.symbolicName = "com.twcable.grabbit"
 
-cqPackage.bundleInstallRoot = '/apps/grabbit/install'
-cqPackage.nativeStartLevel = 30
-cqPackage.dependencyStartLevel = 20
+createPackage.bundleInstallRoot = '/apps/grabbit/install'
 
-bundle.installPath = '/apps/grabbit/install/${cqPackage.nativeStartLevel}'
-
-dependencies {
-    // This project's runtime for inclusion in the CQ package
-    cq_package project(path: ":${name}", configuration: 'runtime')
-    cq_package project(path: ":${name}", configuration: 'default')
-
-    native_cq_package files("${project.jar.archivePath}")
-}
-
+bundle.installPath = '/apps/grabbit/install'
 
 jar {
     from ('src/main/content/SLING-INF/content', {
@@ -92,7 +81,7 @@ configurations.cq_package {
 
     // excluding Joda Time too as AEM5.6 provides its own in com.day.commons.osgi.wrapper.joda-time
     exclude group: 'joda-time', module: 'joda-time'
-    
+
     exclude group: 'com.google.code.findbugs', module: 'jsr305'
 
     exclude group: 'com.day.cq.workflow', module: 'cq-workflow-console'
